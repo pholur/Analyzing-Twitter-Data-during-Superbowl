@@ -66,14 +66,14 @@ def extract_feat(file_name):
             idx = int((stamp-beginstamp)/3600)
             #print(idx)
 
-            if idx < feat_end_hr - feat_begin_hr:
+            if idx >= 0 and idx < feat_end_hr - feat_begin_hr:
                 number_of_tweets[idx] += 1
                 number_of_retweets[idx] += json_object['metrics']['citations']['total']
                 s_number_of_followers[idx] += json_object['author']['followers']
                 max_of_followers[idx] = max(max_of_followers[idx],json_object['author']['followers'])
 
             if idx > 0 and idx < feat_end_hr - feat_begin_hr + 1:
-                    target[idx-1] += 1
+                target[idx-1] += 1
 
     table = [number_of_tweets, number_of_retweets, s_number_of_followers, max_of_followers, time_of_day, target]
     df = pd.DataFrame(table)
