@@ -63,8 +63,9 @@ with open("ECE219_tweet_data/tweets_#gopatriots.txt", encoding="utf-8") as f:
             number_of_retweets[idx] += json_object['metrics']['citations']['total']
             s_number_of_followers[idx] += json_object['author']['followers']
             max_of_followers[idx] = max(max_of_followers[idx],json_object['author']['followers'])
-            if idx >0:
-                target[idx-1] += 1
+
+        if idx >0:
+            target[idx-1] += 1
 
 print('-'*40)
 
