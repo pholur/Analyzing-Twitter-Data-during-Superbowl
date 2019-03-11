@@ -49,7 +49,8 @@ endstamp = maxcit
 endstamp -= endstamp % 3600
 print(endstamp)
 
-
+##################### adjustment for range function ######################3
+endstamp = endstamp + 3600
 
 number_of_tweets = [0 for stamp in range(beginstamp,endstamp,3600)]
 number_of_retweets = [0 for stamp in range(beginstamp,endstamp,3600)]
@@ -74,8 +75,9 @@ for idx, stamp in enumerate(range(beginstamp,endstamp,3600)):
             if json_object['citation_date'] >= stamp + 3600 and json_object['citation_date'] < stamp + 7200:
                 target[idx] += 1
 
-
+print('-'*40)
 print(len(0 for stamp in range(beginstamp,endstamp,3600)))
+print(time_of_day)
 
 
 
