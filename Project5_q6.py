@@ -14,11 +14,6 @@ from sklearn.model_selection import cross_val_score
 
 pst_tz = pytz.timezone('America/Los_Angeles')
 
-#
-# l1 = []
-# ln = []
-# lt = []
-# la = []
 mincit = 10e9
 maxcit = -1
 
@@ -49,8 +44,12 @@ endstamp = maxcit
 endstamp -= endstamp % 3600
 print(endstamp)
 
+
+
 ##################### adjustment for range function ######################3
 endstamp = endstamp + 3600
+
+print((endstamp-beginstamp)/3600)
 
 number_of_tweets = [0 for stamp in range(beginstamp,endstamp,3600)]
 number_of_retweets = [0 for stamp in range(beginstamp,endstamp,3600)]
@@ -61,23 +60,27 @@ target = [0 for stamp in range(beginstamp,endstamp,3600)]
 
 for idx, stamp in enumerate(range(beginstamp,endstamp,3600)):
     time_of_day[idx] = datetime.datetime.fromtimestamp(stamp, pst_tz).hour
-    with open("ECE219_tweet_data/tweets_#gopatriots.txt", encoding="utf-8") as f:
-        for line in f:
-            # print(line)
-            json_object = json.loads(line)
-            if json_object['citation_date'] >= stamp and json_object['citation_date'] < stamp + 3600:
-                print(idx)
-                number_of_tweets[idx] += 1
-                number_of_retweets[idx] += json_object['metrics']['citations']['total']
-                s_number_of_followers[idx] += json_object['author']['followers']
-                max_of_followers[idx] = max(max_of_followers[idx],json_object['author']['followers'])
 
-            if json_object['citation_date'] >= stamp + 3600 and json_object['citation_date'] < stamp + 7200:
-                target[idx] += 1
+
+with open("ECE219_tweet_data/tweets_#gopatriots.txt", encoding="utf-8") as f:
+    for line in f:
+        # print(line)
+        json_object = json.loads(line)
+        stamp =  json_object['citation_date']
+        stamp -= stamp % 3600
+        idx = int((stamp-beginstamp)/3600)
+        number_of_tweets[idx] += 1
+        number_of_retweets[idx] += json_object['metrics']['citations']['total']
+        s_number_of_followers[idx] += json_object['author']['followers']
+        max_of_followers[idx] = max(max_of_followers[idx],json_object['author']['followers'])
+        if idx >0:
+            target[idx-1] += 1
 
 print('-'*40)
-print(len(0 for stamp in range(beginstamp,endstamp,3600)))
-print(time_of_day)
+
+print(target)
+print(len(time_of_day))
+
 
 
 
