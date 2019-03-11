@@ -1,6 +1,7 @@
 import json
 import pytz
 import datetime
+import time
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,64 +15,104 @@ from sklearn.model_selection import cross_val_score
 
 pst_tz = pytz.timezone('America/Los_Angeles')
 
-mincit = 10e9
-maxcit = -1
+def min_max_timestamps(s):
+    mincit = 10e9
+    maxcit = -1
+
+    with open(s, encoding="utf-8") as f:
+        for line in f:
+            json_object = json.loads(line)
+            if json_object['citation_date'] < mincit:
+                mincit = json_object['citation_date']
+            if json_object['citation_date'] > maxcit:
+                maxcit = json_object['citation_date']
+    return [mincit,maxcit]
 
 
-with open("ECE219_tweet_data/tweets_#gopatriots.txt",encoding="utf-8") as f:
-    for line in f:
-        json_object = json.loads(line)
-        if json_object['citation_date'] <mincit:
-            mincit = json_object['citation_date']
-        if json_object['citation_date'] >maxcit:
-            maxcit = json_object['citation_date']
+def feature_extraction(beginstamp, endstamp, window,s):
+    #############  Preprocessing #############
+    beginstamp -= beginstamp % window
+    endstamp -= endstamp % window
+    #########################################
+    number_of_tweets = [0 for stamp in range(beginstamp, endstamp, window)]
+    number_of_retweets = [0 for stamp in range(beginstamp, endstamp, window)]
+    s_number_of_followers = [0 for stamp in range(beginstamp, endstamp, window)]
+    max_of_followers = [0 for stamp in range(beginstamp, endstamp, window)]
+    time_of_day = [0 for stamp in range(beginstamp, endstamp, window)]
+    target = [0 for stamp in range(beginstamp, endstamp, window)]
+
+    for idx, stamp in enumerate(range(beginstamp, endstamp, window)):
+        time_of_day[idx] = datetime.datetime.fromtimestamp(stamp, pst_tz).hour
+
+    limit = int((endstamp - beginstamp) / window)
+
+    with open(s, encoding="utf-8") as f:
+        for line in f:
+            # print(line)
+            json_object = json.loads(line)
+            stamp = json_object['citation_date']
+            stamp -= stamp % window
+            idx = int((stamp - beginstamp) / window)
+
+            if idx < limit and idx >=0:
+
+                number_of_tweets[idx] += 1
+                number_of_retweets[idx] += json_object['metrics']['citations']['total']
+                s_number_of_followers[idx] += json_object['author']['followers']
+                max_of_followers[idx] = max(max_of_followers[idx], json_object['author']['followers'])
+            if idx > 0 and idx <=limit:
+
+                target[idx - 1] += 1
+
+
+    feature_target = pd.DataFrame(
+        {'number_of_tweets': number_of_tweets,
+         'number_of_retweets': number_of_retweets,
+         's_number_of_followers': s_number_of_followers,
+         'max_of_followers': max_of_followers,
+         'time_of_day': time_of_day,
+         'target': target
+         })
+    return feature_target
 
 
 
+def lin_regress_r(datum):
+    reg_fin = LinearRegression().fit(datum[:,:-1], datum[:,-1])
+    pred = reg_fin.predict(datum[:,:-1])
+    rmse_trn = (mean_squared_error(datum[:, -1], pred))
+    return rmse_trn
 
-beginstamp = mincit
-beginstamp -= beginstamp % 3600
-print(beginstamp)
 
-endstamp = maxcit
-endstamp -= endstamp % 3600
-print(endstamp)
+s = 'ECE219_tweet_data/tweets_#superbowl.txt'
+l = min_max_timestamps(s)
 
-print((endstamp-beginstamp)/3600)
+beginstamp = l[0]
+endstamp = l[1]
 
-number_of_tweets = [0 for stamp in range(beginstamp,endstamp,3600)]
-number_of_retweets = [0 for stamp in range(beginstamp,endstamp,3600)]
-s_number_of_followers = [0 for stamp in range(beginstamp,endstamp,3600)]
-max_of_followers = [0 for stamp in range(beginstamp,endstamp,3600)]
-time_of_day = [0 for stamp in range(beginstamp,endstamp,3600)]
-target = [0 for stamp in range(beginstamp,endstamp,3600)]
+# v = datetime.datetime.fromtimestamp(beginstamp, pst_tz)
+# print(v)
+# time1 = int(time.mktime(datetime.datetime(v.year, v.month, v.day, v.hour, v.minute, v.second, v.microsecond, pst_tz).timetuple()))
 
-for idx, stamp in enumerate(range(beginstamp,endstamp,3600)):
-    time_of_day[idx] = datetime.datetime.fromtimestamp(stamp, pst_tz).hour
+features = feature_extraction(beginstamp,endstamp,3600,s)
 
-limit = int((endstamp-beginstamp)/3600)
 
-with open("ECE219_tweet_data/tweets_#gopatriots.txt", encoding="utf-8") as f:
-    for line in f:
-        # print(line)
-        json_object = json.loads(line)
-        stamp = json_object['citation_date']
-        stamp -= stamp % 3600
-        idx = int((stamp-beginstamp)/3600)
-        if idx < limit:
-            number_of_tweets[idx] += 1
-            number_of_retweets[idx] += json_object['metrics']['citations']['total']
-            s_number_of_followers[idx] += json_object['author']['followers']
-            max_of_followers[idx] = max(max_of_followers[idx],json_object['author']['followers'])
+stamp1 = int(time.mktime(datetime.datetime(2015, 2, 1, 8, 0, 0, 0, pst_tz).timetuple()))
+stamp2 = int(time.mktime(datetime.datetime(2015, 2, 1, 20, 0, 0, 0, pst_tz).timetuple()))
 
-        if idx >0:
-            target[idx-1] += 1
+feature1 = feature_extraction(beginstamp,stamp1,3600,s)
+feature2 = feature_extraction(stamp1,stamp2,300,s)
+feature3 = feature_extraction(stamp2,endstamp,3600,s)
 
-print('-'*40)
-
-print(target)
-print(len(time_of_day))
-
+dk1 = feature1.values
+print(lin_regress_r(dk1))
+print()
+dk2 = feature2.values
+print(lin_regress_r(dk2))
+print()
+dk3 = feature3.values
+print(lin_regress_r(dk3))
+print()
 
 
 
@@ -104,86 +145,7 @@ print(len(time_of_day))
 # print()
 # print((maxcit-mincit)/3600)
 # print(datetime.datetime.fromtimestamp(maxcit, pst_tz))
-
-#
-#
-#
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # for i in ln[45:48]:
-#     print(i)
-#
-# print()
-
-# l2 = []
-# with open("ECE219_tweet_data/tweets_#sb49.txt", encoding="utf-8") as f:
-#     for line in f:
-#         # print(line)
-#         json_object = json.loads(line)
-#         l2.append(json_object['citation_date'])
-#
-# for i in l2[45:48]:
-#     print(i)
-#
-# print()
-#
-# l3 = []
-# with open("ECE219_tweet_data/tweets_#superbowl.txt", encoding="utf-8") as f:
-#     for line in f:
-#         # print(line)
-#         json_object = json.loads(line)
-#         l3.append(json_object['citation_date'])
-#
-# for i in l3[5:48]:
-#     print(i)
-#
-# print()
-#
-# l4 = []
-# with open("ECE219_tweet_data/tweets_#nfl.txt", encoding="utf-8") as f:
-#     for line in f:
-#         # print(line)
-#         json_object = json.loads(line)
-#         l4.append(json_object['citation_date'])
-#
-# for i in l4[45:48]:
-#     print(i)
-#
-# print()
-#
-# l5 = []
-# with open("ECE219_tweet_data/tweets_#patriots.txt", encoding="utf-8") as f:
-#     for line in f:
-#         # print(line)
-#         json_object = json.loads(line)
-#         l5.append(json_object['citation_date'])
-#
-# for i in l5[45:48]:
-#     print(i)
-#
-# print()
-#
-# l6 = []
-# with open("ECE219_tweet_data/tweets_#gohawks.txt", encoding="utf-8") as f:
-#     for line in f:
-#         # print(line)
-#         json_object = json.loads(line)
-#         l6.append(json_object['citation_date'])
-#
-# for i in l6[45:48]:
 #     print(i)
 #
 # print()
