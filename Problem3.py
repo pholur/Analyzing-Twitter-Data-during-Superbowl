@@ -17,7 +17,7 @@ pst_tz = pytz.timezone('America/Los_Angeles')
 names = ["tweets_#gohawks.txt", "tweets_#gopatriots.txt", \
          "tweets_#nfl.txt", "tweets_#patriots.txt", "tweets_#sb49.txt", "tweets_#superbowl.txt"]
 feat = ["number of tweets","number of retweets", "sum of followers", "max of followers",\
-        "time of day"]
+        "time of day", "number of impressions", "ranking score", "friend count of user", "listed count", "foll. of orig. author"]
 
 def LR(datum):
     reg_fin = LinearRegression().fit(datum[:,:-1], datum[:,-1])
