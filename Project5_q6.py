@@ -157,9 +157,9 @@ if __name__ == '__main__':
         dk1 = feature1.values
         win1 = lin_regress_r(dk1)
         dk2 = feature2.values
-        win2 = lin_regress_r(dk1)
+        win2 = lin_regress_r(dk2)
         dk3 = feature3.values
-        win3 = lin_regress_r(dk1)
+        win3 = lin_regress_r(dk3)
 
         print()
         print(s)
