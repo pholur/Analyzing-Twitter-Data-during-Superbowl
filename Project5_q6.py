@@ -10,6 +10,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import KFold
+import statsmodels.api as sm
 from sklearn.model_selection import cross_val_score
 
 
@@ -48,7 +49,7 @@ def feature_extraction(beginstamp, endstamp, window,s):
     listed_count = [0 for stamp in range(beginstamp, endstamp, window)]
     s_foll_of_orig_auth = [0 for stamp in range(beginstamp, endstamp, window)]
     ranking_score = [0 for stamp in range(beginstamp, endstamp, window)]
-
+    num = 0
     target = [0 for stamp in range(beginstamp, endstamp, window)]
 
     for idx, stamp in enumerate(range(beginstamp, endstamp, window)):
@@ -67,6 +68,7 @@ def feature_extraction(beginstamp, endstamp, window,s):
             if idx < limit and idx >=0:
 
                 number_of_tweets[idx] += 1
+                num +=1
                 number_of_retweets[idx] += json_object['metrics']['citations']['total']
                 # s_number_of_followers[idx] += json_object['author']['followers']
                 # max_of_followers[idx] = max(max_of_followers[idx], json_object['author']['followers'])
@@ -77,8 +79,8 @@ def feature_extraction(beginstamp, endstamp, window,s):
             if idx > 0 and idx <=limit:
 
                 target[idx - 1] += 1
-
-
+    # print(s)
+    # print(num)
     feature_target = pd.DataFrame(
         {'number_of_tweets': number_of_tweets,
          'number_of_retweets': number_of_retweets,
@@ -130,8 +132,8 @@ def lin_regress_r(datum):
 
 
 if __name__ == '__main__':
-    names = ["tweets_#gohawks.txt", "tweets_#gopatriots.txt","tweets_#nfl.txt", "tweets_#patriots.txt", "tweets_#sb49.txt", "tweets_#superbowl.txt"]
-
+    #names = ["tweets_#gohawks.txt", "tweets_#gopatriots.txt","tweets_#nfl.txt", "tweets_#patriots.txt", "tweets_#sb49.txt", "tweets_#superbowl.txt"]
+    names = ['file_aggreg.txt']
     # s = 'ECE219_tweet_data/tweets_#gopatriots.txt'
     # s_write = 'tweets_#gopatriots.xlsx'
     for s in names:
@@ -167,56 +169,11 @@ if __name__ == '__main__':
 
             print(name[i],'&','%.2f'%win1[i],'&','%.2f'%win2[i],'&','%.2f'%win3[i],'\ \ ','\hline')
 
-    # feature_window = pd.DataFrame(
-    #     {'window1': [lin_regress_r(dk1)],
-    #      'window2': [lin_regress_r(dk2)],
-    #      'window3': [lin_regress_r(dk3)]
-    #
-    #      })
-    # print(feature_window)
-    # feature_window.to_excel(s_write)
+    feature_window = pd.DataFrame(
+        {'window1': [lin_regress_r(dk1)],
+         'window2': [lin_regress_r(dk2)],
+         'window3': [lin_regress_r(dk3)]
 
-    # df = feature_window
-    #
-    # # Create a Pandas Excel writer using XlsxWriter as the engine.
-    # writer = pd.ExcelWriter('tweets_#gopatriots.xlsx', engine='xlsxwriter')
-    #
-    # # Convert the dataframe to an XlsxWriter Excel object.
-    # df.to_excel(writer, sheet_name='Sheet1')
+         })
+    print(feature_window)
 
-
-
-
-
-#
-# print(datetime.datetime.fromtimestamp(timestamp, pst_tz))
-#
-# min_pst_time = datetime.datetime.fromtimestamp(mincit, pst_tz)
-# #############################  set minutes, seconds and microseconds to zero #############
-# t = min_pst_time.replace(minute=0, second=0, microsecond=0)
-# print(t)
-
-#
-# for idx,i in enumerate(l1[45:48]):
-#     print(i)
-#     print()
-#     print(ln[idx+45])
-#     print()
-#     print(la[idx+45])
-#     print()
-#     ################################   for hours ###################################
-#     print(datetime.datetime.fromtimestamp(lt[idx+45], pst_tz).hour)
-#     ##################################################################################
-#     print('-'*40)
-#     print()
-# print(mincit)
-# print(mincit+3600)
-# print(datetime.datetime.fromtimestamp(mincit, pst_tz))
-# print(datetime.datetime.fromtimestamp(mincit+3600, pst_tz))
-# print()
-# print((maxcit-mincit)/3600)
-# print(datetime.datetime.fromtimestamp(maxcit, pst_tz))
-# for i in ln[45:48]:
-#     print(i)
-#
-# print()
