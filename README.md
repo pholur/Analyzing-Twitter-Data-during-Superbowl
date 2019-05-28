@@ -1,4 +1,4 @@
-# DataMiningP5
+# Analyzing Twitter Data during Superbowl
 To run this code according to the problem specification, simply enter the following command in terminal:
 >> \>> python \*.py\*
 
